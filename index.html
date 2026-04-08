@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solitas 13 Municipal - Layout de Racks</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; height: 100vh; display: flex; flex-direction: column; }
+
+  #topbar {
+    background: #16213e;
+    border-bottom: 2px solid #8B1538;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  #topbar h1 { font-size: 14px; color: #e8c4cc; letter-spacing: 1px; flex: 1; }
+
+  .btn {
+    background: #8B1538;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn:hover { background: #b01d48; }
+  .btn.active { background: #0066CC; }
+
+  #stats {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: #aaa;
+  }
+  #stats span { background: #0d0d1a; padding: 3px 8px; border-radius: 3px; }
+  #stats b { color: #e8c4cc; }
+
+  #canvas-wrap {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+  }
+  #canvas-wrap.grabbing { cursor: grabbing; }
+
+  svg { display: block; }
+
+  /* Rack styles */
+  .rack-F { fill: none; stroke: #8B1538; stroke-width: 1.5; }
+  .rack-I { fill: none; stroke: #8B1538; stroke-width: 1.5; }
+  .rack-Ra { fill: none; stroke: #8B1538; stroke-width: 1.5; }
+  .rack-Rb { fill: none; stroke: #6b0f2a; stroke-width: 1; stroke-dasharray: 3,2; }
+  .rack-label { font-size: 7px; fill: #8B1538; font-family: Arial; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+  .rack-label-small { font-size: 5.5px; }
+
+  .perimetro { fill: none; stroke: #8B1538; stroke-width: 3; }
+  .cota-line { stroke: #0066CC; stroke-width: 0.6; }
+  .cota-text { font-size: 6px; fill: #0066CC; font-family: Arial; text-anchor: middle; }
+  .cota-text-v { font-size: 6px; fill: #0066CC; font-family: Arial; text-anchor: middle; }
+
+  .rack-hover { fill: rgba(255,220,100,0.25) !important; stroke: #f0a500 !important; stroke-width: 2 !important; }
+  .rack-selected { fill: rgba(255,180,0,0.35) !important; stroke: #f0a500 !important; stroke-width: 2.5 !important; }
+
+  .pasillo-label { font-size: 6px; fill: #555; font-family: Arial; text-anchor: middle; }
+
+  #tooltip {
+    position: absolute;
+    background: #16213e;
+    border: 1px solid #8B1538;
+    border-radius: 5px;
+    padding: 7px 11px;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s;
+    z-index: 10;
+    min-width: 140px;
+  }
+  #tooltip b { color: #e8c4cc; }
+  #tooltip .sub { color: #aaa; font-size: 10px; }
+
+  #zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .zoom-btn {
+    width: 32px; height: 32px;
+    background: #16213e;
+    border: 1px solid #8B1538;
+    color: #e8c4cc;
+    font-size: 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .zoom-btn:hover { background: #8B1538; }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <h1>SOLITAS 13 MUNICIPAL — LAYOUT DE RACKS</h1>
+  <div id="stats">
+    <span>Fondo F: <b>8</b></span>
+    <span>Columna I: <b>29</b></span>
+    <span>Relleno R: <b>55 pos.</b></span>
+    <span>Total rectángulos: <b>147</b></span>
+  </div>
+  <button class="btn" id="btn-cotas">Cotas ON/OFF</button>
+  <button class="btn" id="btn-reset">Ajustar vista</button>
+  <button class="btn" id="btn-clear">Limpiar selección</button>
+</div>
+
+<div id="canvas-wrap">
+  <svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="tooltip"></div>
+  <div id="zoom-controls">
+    <div class="zoom-btn" id="zin">+</div>
+    <div class="zoom-btn" id="zout">−</div>
+  </div>
+</div>
+
+<script>
+// ============ PARAMETROS (metros) ============
+const SCALE = 10;  // px por metro
+const ANCHO = 19.67, ALTO = 76.79;
+const R_SUP = 0.80, R_INF = 3.00;
+const FONDO_W = 2.40, FONDO_H = 1.50;
+const IZQ_W = 2.30, IZQ_H = 2.40;
+const PASILLO_IZQ = 3.00, PASILLO_F_R = 3.00;
+const RELL_W = 2.40, RELL_H_MITAD = 1.50, RELL_H_TOTAL = 3.00;
+const PASILLO_FILA = 3.30;
+
+const PX = SCALE, m = v => v * PX;
+
+// ============ SVG SETUP ============
+const svg = document.getElementById('svg');
+const SVG_W = m(ANCHO) + 120;
+const SVG_H = m(ALTO) + 120;
+svg.setAttribute('width', SVG_W);
+svg.setAttribute('height', SVG_H);
+svg.setAttribute('viewBox', `0 0 ${SVG_W} ${SVG_H}`);
+
+const OX = 70, OY = 50;  // offset del perímetro
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+// Grupos
+const gCotas = el('g', {id:'cotas'}, svg);
+const gPerim = el('g', {id:'perim'}, svg);
+const gRacks = el('g', {id:'racks'}, svg);
+
+// ============ PERIMETRO ============
+el('rect', {
+  x: OX, y: OY, width: m(ANCHO), height: m(ALTO),
+  class: 'perimetro'
+}, gPerim);
+
+// ============ RACKS ============
+const racks = [];
+
+function addRack(x_m, y_m, w_m, h_m, id, tipo, mitad) {
+  const rx = OX + m(x_m), ry = OY + m(y_m);
+  const rw = m(w_m), rh = m(h_m);
+  const g = el('g', {}, gRacks);
+  const rect = el('rect', {
+    x: rx, y: ry, width: rw, height: rh,
+    class: `rack-${tipo}`,
+    'data-id': id,
+    'data-w': w_m,
+    'data-h': h_m,
+    'data-tipo': tipo
+  }, g);
+
+  const label = el('text', {
+    x: rx + rw/2,
+    y: ry + rh/2,
+    class: `rack-label${id.length > 5 ? ' rack-label-small' : ''}`,
+  }, g);
+  label.textContent = id;
+
+  g.style.cursor = 'pointer';
+  g.addEventListener('mouseenter', e => {
+    if (!rect.classList.contains('rack-selected'))
+      rect.classList.add('rack-hover');
+    showTooltip(e, id, w_m, h_m, tipo);
+  });
+  g.addEventListener('mouseleave', () => {
+    rect.classList.remove('rack-hover');
+    hideTooltip();
+  });
+  g.addEventListener('mousemove', e => showTooltip(e, id, w_m, h_m, tipo));
+  g.addEventListener('click', () => {
+    rect.classList.toggle('rack-selected');
+    rect.classList.remove('rack-hover');
+  });
+
+  racks.push({ id, rect, x_m, y_m, w_m, h_m, tipo });
+}
+
+// Fila F
+for (let i = 0; i < 8; i++) {
+  addRack(i * FONDO_W, R_SUP, FONDO_W, FONDO_H, `F-${String(i+1).padStart(2,'0')}`, 'F');
+}
+
+// Columna I
+const y_central = R_SUP + FONDO_H;
+const alto_izq = ALTO - y_central - R_INF;
+const n_izq = Math.floor(alto_izq / IZQ_H);
+for (let i = 0; i < n_izq; i++) {
+  addRack(0, y_central + i * IZQ_H, IZQ_W, IZQ_H, `I-${String(i+1).padStart(2,'0')}`, 'I');
+}
+
+// Relleno R
+const y_rell = R_SUP + FONDO_H + PASILLO_F_R;
+const x_rell = IZQ_W + PASILLO_IZQ;
+const alto_rell = ALTO - y_rell - R_INF;
+const n_cols = Math.floor((ANCHO - x_rell) / RELL_W);
+const n_filas = Math.floor((alto_rell + PASILLO_FILA) / (RELL_H_TOTAL + PASILLO_FILA));
+let cnt = 1;
+for (let f = 0; f < n_filas; f++) {
+  const y_top = y_rell + f * (RELL_H_TOTAL + PASILLO_FILA);
+  for (let c = 0; c < n_cols; c++) {
+    const x = x_rell + c * RELL_W;
+    const id = String(cnt).padStart(2,'0');
+    addRack(x, y_top, RELL_W, RELL_H_MITAD, `R-${id}a`, 'Ra');
+    addRack(x, y_top + RELL_H_MITAD, RELL_W, RELL_H_MITAD, `R-${id}b`, 'Rb');
+    cnt++;
+  }
+}
+
+// ============ COTAS ============
+function cotaH(x1_m, x2_m, y_m, offset_m, label) {
+  const xa = OX + m(x1_m), xb = OX + m(x2_m);
+  const y0 = OY + m(y_m), yc = y0 + m(offset_m);
+  const g = el('g', {}, gCotas);
+  el('line', {x1:xa, y1:y0, x2:xa, y2:yc-2, class:'cota-line'}, g);
+  el('line', {x1:xb, y1:y0, x2:xb, y2:yc-2, class:'cota-line'}, g);
+  el('line', {x1:xa, y1:yc, x2:xb, y2:yc, class:'cota-line'}, g);
+  el('line', {x1:xa-3, y1:yc-3, x2:xa+3, y2:yc+3, class:'cota-line'}, g);
+  el('line', {x1:xb-3, y1:yc-3, x2:xb+3, y2:yc+3, class:'cota-line'}, g);
+  const t = el('text', {x:(xa+xb)/2, y:yc-3, class:'cota-text'}, g);
+  t.textContent = label;
+}
+
+function cotaV(y1_m, y2_m, x_m, offset_m, label) {
+  const ya = OY + m(y1_m), yb = OY + m(y2_m);
+  const x0 = OX + m(x_m), xc = x0 + m(offset_m);
+  const g = el('g', {}, gCotas);
+  el('line', {x1:x0, y1:ya, x2:xc+2, y2:ya, class:'cota-line'}, g);
+  el('line', {x1:x0, y1:yb, x2:xc+2, y2:yb, class:'cota-line'}, g);
+  el('line', {x1:xc, y1:ya, x2:xc, y2:yb, class:'cota-line'}, g);
+  el('line', {x1:xc-3, y1:ya-3, x2:xc+3, y2:ya+3, class:'cota-line'}, g);
+  el('line', {x1:xc-3, y1:yb-3, x2:xc+3, y2:yb+3, class:'cota-line'}, g);
+  // Texto rotado
+  const mx = xc + (offset_m > 0 ? 10 : -10);
+  const my = (ya + yb) / 2;
+  const t = el('text', {
+    x: mx, y: my,
+    class: 'cota-text',
+    transform: `rotate(-90, ${mx}, ${my})`
+  }, g);
+  t.textContent = label;
+}
+
+// Generales
+cotaH(0, ANCHO, 0, -3.5, `${ANCHO} m`);
+cotaV(0, ALTO, ANCHO, 3.5, `${ALTO} m`);
+// Retiros
+cotaV(0, R_SUP, 0, -3.5, `${R_SUP}`);
+cotaV(R_SUP, R_SUP + FONDO_H, 0, -3.5, `${FONDO_H}`);
+cotaV(y_central, y_rell, 0, -3.5, `${PASILLO_F_R}`);
+cotaV(ALTO - R_INF, ALTO, 0, -3.5, `${R_INF}`);
+// Modulares
+cotaH(0, FONDO_W, R_SUP, -2, `${FONDO_W}`);
+cotaH(0, IZQ_W, y_central, -2, `${IZQ_W}`);
+cotaH(IZQ_W, IZQ_W + PASILLO_IZQ, y_rell, -2, `${PASILLO_IZQ}`);
+cotaH(x_rell, x_rell + RELL_W, y_rell, -2, `${RELL_W}`);
+const y_primera_fila = y_rell;
+cotaV(y_primera_fila, y_primera_fila + RELL_H_MITAD, ANCHO, 3.5, `${RELL_H_MITAD}`);
+cotaV(y_primera_fila + RELL_H_MITAD, y_primera_fila + RELL_H_TOTAL, ANCHO, 3.5, `${RELL_H_MITAD}`);
+cotaV(y_primera_fila + RELL_H_TOTAL, y_primera_fila + RELL_H_TOTAL + PASILLO_FILA, ANCHO, 3.5, `${PASILLO_FILA}`);
+cotaV(y_central + IZQ_H, y_central + IZQ_H * 2, IZQ_W, 1.5, `${IZQ_H}`);
+
+// Etiquetas de zonas
+function zonaLabel(x_m, y_m, txt) {
+  const t = el('text', {
+    x: OX + m(x_m), y: OY + m(y_m),
+    class: 'pasillo-label',
+    'text-anchor': 'middle'
+  }, gPerim);
+  t.textContent = txt;
+}
+zonaLabel(IZQ_W/2 + (ANCHO - IZQ_W)/2 + IZQ_W, y_central + (y_rell - y_central)/2, '— PASILLO 3,00 m —');
+
+// ============ TOOLTIP ============
+const tooltip = document.getElementById('tooltip');
+const tipoNombre = {F: 'Fila Fondo', I: 'Columna Izquierda', Ra: 'Relleno (cara A)', Rb: 'Relleno (cara B)'};
+
+function showTooltip(e, id, w, h, tipo) {
+  tooltip.innerHTML = `<b>${id}</b><br><span class="sub">${tipoNombre[tipo]||tipo}<br>${w} m × ${h} m</span>`;
+  tooltip.style.opacity = 1;
+  moveTooltip(e);
+}
+function hideTooltip() { tooltip.style.opacity = 0; }
+function moveTooltip(e) {
+  const wrap = document.getElementById('canvas-wrap').getBoundingClientRect();
+  tooltip.style.left = (e.clientX - wrap.left + 14) + 'px';
+  tooltip.style.top = (e.clientY - wrap.top + 14) + 'px';
+}
+
+// ============ PAN + ZOOM ============
+const wrap = document.getElementById('canvas-wrap');
+let viewX = 0, viewY = 0, viewZoom = 1;
+let dragging = false, lastX, lastY;
+
+function applyTransform() {
+  svg.style.transform = `translate(${viewX}px,${viewY}px) scale(${viewZoom})`;
+  svg.style.transformOrigin = '0 0';
+}
+
+function fitView() {
+  const ww = wrap.clientWidth, wh = wrap.clientHeight;
+  const scaleX = (ww - 40) / SVG_W;
+  const scaleY = (wh - 40) / SVG_H;
+  viewZoom = Math.min(scaleX, scaleY);
+  viewX = (ww - SVG_W * viewZoom) / 2;
+  viewY = (wh - SVG_H * viewZoom) / 2;
+  applyTransform();
+}
+
+wrap.addEventListener('mousedown', e => {
+  dragging = true; lastX = e.clientX; lastY = e.clientY;
+  wrap.classList.add('grabbing');
+});
+window.addEventListener('mouseup', () => { dragging = false; wrap.classList.remove('grabbing'); });
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  viewX += e.clientX - lastX;
+  viewY += e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  applyTransform();
+});
+
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.12 : 0.89;
+  const rect = wrap.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  viewX = mx - (mx - viewX) * factor;
+  viewY = my - (my - viewY) * factor;
+  viewZoom *= factor;
+  applyTransform();
+}, { passive: false });
+
+document.getElementById('zin').onclick = () => { viewZoom *= 1.2; applyTransform(); };
+document.getElementById('zout').onclick = () => { viewZoom /= 1.2; applyTransform(); };
+document.getElementById('btn-reset').onclick = fitView;
+document.getElementById('btn-clear').onclick = () => {
+  document.querySelectorAll('.rack-selected').forEach(r => r.classList.remove('rack-selected'));
+};
+
+let cotasVisible = true;
+document.getElementById('btn-cotas').onclick = function() {
+  cotasVisible = !cotasVisible;
+  gCotas.style.display = cotasVisible ? '' : 'none';
+  this.classList.toggle('active', !cotasVisible);
+};
+
+// Touch pan
+let touches = [];
+wrap.addEventListener('touchstart', e => { touches = [...e.touches]; });
+wrap.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 1 && touches.length === 1) {
+    viewX += e.touches[0].clientX - touches[0].clientX;
+    viewY += e.touches[0].clientY - touches[0].clientY;
+  }
+  if (e.touches.length === 2 && touches.length === 2) {
+    const d0 = Math.hypot(touches[1].clientX-touches[0].clientX, touches[1].clientY-touches[0].clientY);
+    const d1 = Math.hypot(e.touches[1].clientX-e.touches[0].clientX, e.touches[1].clientY-e.touches[0].clientY);
+    viewZoom *= d1/d0;
+  }
+  touches = [...e.touches];
+  applyTransform();
+}, { passive: false });
+
+window.addEventListener('load', fitView);
+window.addEventListener('resize', fitView);
+</script>
+</body>
+</html>
