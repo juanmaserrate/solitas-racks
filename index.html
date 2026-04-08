@@ -123,7 +123,7 @@ svg { display:block; }
     <div class="logo">Depósito Industrial</div>
     <div class="title">SOLITAS 13 — BURZACO</div>
   </div>
-  <div class="sub">Layout de almacenamiento &nbsp;|&nbsp; Escala 1:1</div>
+  <div class="sub">Scroll ↕ para navegar &nbsp;|&nbsp; Ctrl+Scroll para zoom &nbsp;|&nbsp; Arrastrar para mover</div>
   <div style="flex:1"></div>
   <div class="pill">Fondo F: <b>8</b></div>
   <div class="pill">Columna I: <b>29</b></div>
@@ -476,10 +476,17 @@ window.addEventListener('mousemove',e=>{
 });
 wrap.addEventListener('wheel',e=>{
   e.preventDefault();
-  const f=e.deltaY<0?1.12:0.89;
-  const r=wrap.getBoundingClientRect();
-  const mx=e.clientX-r.left, my=e.clientY-r.top;
-  vx=mx-(mx-vx)*f; vy=my-(my-vy)*f; vz*=f; applyT();
+  // Ctrl+wheel o pinch = zoom, wheel solo = scroll vertical
+  if(e.ctrlKey || e.metaKey){
+    const f=e.deltaY<0?1.12:0.89;
+    const r=wrap.getBoundingClientRect();
+    const mx=e.clientX-r.left, my=e.clientY-r.top;
+    vx=mx-(mx-vx)*f; vy=my-(my-vy)*f; vz*=f;
+  } else {
+    vy -= e.deltaY * 0.8;
+    if(e.shiftKey) vx -= e.deltaY * 0.8;
+  }
+  applyT();
 },{passive:false});
 
 document.getElementById('zin').onclick=()=>{ vz*=1.2; applyT(); };
@@ -518,9 +525,19 @@ wrap.addEventListener('touchmove',e=>{
   touches=[...e.touches]; applyT();
 },{passive:false});
 
-// Inicio con zoom mas cercano (1.5x del fit)
-window.addEventListener('load',()=>fitView(1.6));
-window.addEventListener('resize',()=>fitView(1.6));
+// Fit por ancho: el ancho completo del deposito entra en pantalla, se scrollea vertical
+function fitByWidth(){
+  const ww=wrap.clientWidth, wh=wrap.clientHeight;
+  vz=(ww-60)/SVG_W;
+  vx=(ww-SVG_W*vz)/2;
+  vy=20;
+  applyT();
+}
+
+document.getElementById('btn-reset').onclick=fitByWidth;
+
+window.addEventListener('load', fitByWidth);
+window.addEventListener('resize', fitByWidth);
 </script>
 </body>
 </html>
