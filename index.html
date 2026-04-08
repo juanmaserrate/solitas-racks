@@ -3,136 +3,176 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Solitas 13 Municipal - Layout de Racks</title>
+<title>Solitas 13 Municipal — Depósito</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; height: 100vh; display: flex; flex-direction: column; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',Arial,sans-serif; background:#2b2b2b; color:#eee; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 
-  #topbar {
-    background: #16213e;
-    border-bottom: 2px solid #8B1538;
-    padding: 10px 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-  }
-  #topbar h1 { font-size: 14px; color: #e8c4cc; letter-spacing: 1px; flex: 1; }
+/* ---- TOP BAR ---- */
+#topbar {
+  background:linear-gradient(90deg,#1a1a1a,#2a2a2a);
+  border-bottom:3px solid #c8a84b;
+  padding:8px 16px;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  flex-shrink:0;
+}
+#topbar .logo { font-size:11px; letter-spacing:3px; color:#c8a84b; font-weight:700; text-transform:uppercase; }
+#topbar .title { font-size:13px; color:#fff; font-weight:600; flex:1; }
+#topbar .sub { font-size:10px; color:#888; }
 
-  .btn {
-    background: #8B1538;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 5px 12px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: background .2s;
-  }
-  .btn:hover { background: #b01d48; }
-  .btn.active { background: #0066CC; }
+.pill { background:#333; border:1px solid #555; border-radius:20px; padding:3px 10px; font-size:11px; color:#ccc; }
+.pill b { color:#c8a84b; }
 
-  #stats {
-    display: flex;
-    gap: 12px;
-    font-size: 11px;
-    color: #aaa;
-  }
-  #stats span { background: #0d0d1a; padding: 3px 8px; border-radius: 3px; }
-  #stats b { color: #e8c4cc; }
+.btn {
+  background:#333; color:#ccc; border:1px solid #555;
+  border-radius:5px; padding:5px 13px; font-size:11px;
+  cursor:pointer; transition:all .2s; white-space:nowrap;
+}
+.btn:hover { background:#c8a84b; color:#000; border-color:#c8a84b; }
+.btn.on { background:#c8a84b; color:#000; border-color:#c8a84b; }
 
-  #canvas-wrap {
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-    cursor: grab;
-  }
-  #canvas-wrap.grabbing { cursor: grabbing; }
+/* ---- CANVAS ---- */
+#canvas-wrap {
+  flex:1; overflow:hidden; position:relative; cursor:grab;
+  background:radial-gradient(ellipse at center, #3a3a3a 0%, #1a1a1a 100%);
+}
+#canvas-wrap.grabbing { cursor:grabbing; }
+svg { display:block; }
 
-  svg { display: block; }
+/* ---- SVG STYLES ---- */
+.floor { fill:#e8e4dc; }
+.wall { fill:#5a5a5a; stroke:#3a3a3a; stroke-width:0.5; }
+.wall-line { stroke:#444; stroke-width:1; fill:none; }
 
-  /* Rack styles */
-  .rack-F { fill: none; stroke: #8B1538; stroke-width: 1.5; }
-  .rack-I { fill: none; stroke: #8B1538; stroke-width: 1.5; }
-  .rack-Ra { fill: none; stroke: #8B1538; stroke-width: 1.5; }
-  .rack-Rb { fill: none; stroke: #6b0f2a; stroke-width: 1; stroke-dasharray: 3,2; }
-  .rack-label { font-size: 7px; fill: #8B1538; font-family: Arial; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-  .rack-label-small { font-size: 5.5px; }
+/* Racks */
+.rack-body-F  { fill:#d4e8f0; stroke:#2a7aa8; stroke-width:1.5; rx:2; }
+.rack-body-I  { fill:#f0e8d4; stroke:#a87a2a; stroke-width:1.5; }
+.rack-body-Ra { fill:#ddeedd; stroke:#2a7a4a; stroke-width:1.5; }
+.rack-body-Rb { fill:#cce0cc; stroke:#1f5e38; stroke-width:1.2; }
+.rack-shelf   { stroke:rgba(0,0,0,0.15); stroke-width:0.5; }
+.rack-label   { font-family:'Segoe UI',Arial; font-weight:700; text-anchor:middle; dominant-baseline:middle; pointer-events:none; }
 
-  .perimetro { fill: none; stroke: #8B1538; stroke-width: 3; }
-  .cota-line { stroke: #0066CC; stroke-width: 0.6; }
-  .cota-text { font-size: 6px; fill: #0066CC; font-family: Arial; text-anchor: middle; }
-  .cota-text-v { font-size: 6px; fill: #0066CC; font-family: Arial; text-anchor: middle; }
+.rack-hover rect  { filter:brightness(0.85) drop-shadow(0 0 4px rgba(200,168,75,0.8)); }
+.rack-selected rect { stroke:#c8a84b !important; stroke-width:2.5 !important; filter:drop-shadow(0 0 6px rgba(200,168,75,0.9)); }
 
-  .rack-hover { fill: rgba(255,220,100,0.25) !important; stroke: #f0a500 !important; stroke-width: 2 !important; }
-  .rack-selected { fill: rgba(255,180,0,0.35) !important; stroke: #f0a500 !important; stroke-width: 2.5 !important; }
+/* Cotas */
+.cota-line { stroke:#1a6bb5; stroke-width:0.8; }
+.cota-text { font-size:8px; fill:#1a6bb5; font-family:'Segoe UI',Arial; text-anchor:middle; dominant-baseline:auto; }
 
-  .pasillo-label { font-size: 6px; fill: #555; font-family: Arial; text-anchor: middle; }
+/* Pasillo arrows */
+.arrow-line { stroke:#888; stroke-width:1; marker-end:url(#arrowhead); }
+.pasillo-txt { font-size:9px; fill:#777; font-family:'Segoe UI'; text-anchor:middle; font-style:italic; }
 
-  #tooltip {
-    position: absolute;
-    background: #16213e;
-    border: 1px solid #8B1538;
-    border-radius: 5px;
-    padding: 7px 11px;
-    font-size: 12px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity .15s;
-    z-index: 10;
-    min-width: 140px;
-  }
-  #tooltip b { color: #e8c4cc; }
-  #tooltip .sub { color: #aaa; font-size: 10px; }
+/* Columnas estructurales */
+.columna { fill:#888; stroke:#666; stroke-width:0.5; }
 
-  #zoom-controls {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .zoom-btn {
-    width: 32px; height: 32px;
-    background: #16213e;
-    border: 1px solid #8B1538;
-    color: #e8c4cc;
-    font-size: 18px;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .zoom-btn:hover { background: #8B1538; }
+/* Zona labels */
+.zona-tag { font-size:10px; font-weight:700; font-family:'Segoe UI'; text-anchor:middle; }
+
+/* ---- TOOLTIP ---- */
+#tooltip {
+  position:absolute; background:rgba(20,20,20,0.95);
+  border:1px solid #c8a84b; border-radius:6px;
+  padding:8px 13px; font-size:12px;
+  pointer-events:none; opacity:0; transition:opacity .12s;
+  z-index:20; min-width:160px; box-shadow:0 4px 20px rgba(0,0,0,0.5);
+}
+#tooltip .tt-id { font-size:14px; font-weight:700; color:#c8a84b; }
+#tooltip .tt-tipo { font-size:10px; color:#888; margin:2px 0; }
+#tooltip .tt-dim { font-size:11px; color:#ccc; }
+#tooltip .tt-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
+
+/* ---- ZOOM ---- */
+#zoom-wrap {
+  position:absolute; bottom:18px; right:18px;
+  display:flex; flex-direction:column; gap:3px;
+  background:rgba(20,20,20,0.7); border-radius:6px; padding:5px;
+  border:1px solid #444;
+}
+.zbtn {
+  width:28px; height:28px; background:#333; border:1px solid #555;
+  color:#ccc; font-size:16px; border-radius:4px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background .2s;
+}
+.zbtn:hover { background:#c8a84b; color:#000; }
+
+/* ---- LEGEND ---- */
+#legend {
+  position:absolute; bottom:18px; left:18px;
+  background:rgba(20,20,20,0.85); border:1px solid #444;
+  border-radius:6px; padding:10px 14px; font-size:11px;
+}
+#legend .l-title { font-size:10px; color:#888; letter-spacing:1px; margin-bottom:6px; }
+.l-row { display:flex; align-items:center; gap:7px; margin:3px 0; color:#ccc; }
+.l-box { width:14px; height:10px; border-radius:2px; border:1px solid rgba(0,0,0,0.3); }
+
+/* ---- SCALE BAR ---- */
+#scalebar {
+  position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
+  background:rgba(20,20,20,0.7); border:1px solid #444;
+  border-radius:4px; padding:5px 12px; font-size:10px; color:#aaa;
+  text-align:center;
+}
 </style>
 </head>
 <body>
 
 <div id="topbar">
-  <h1>SOLITAS 13 MUNICIPAL — LAYOUT DE RACKS</h1>
-  <div id="stats">
-    <span>Fondo F: <b>8</b></span>
-    <span>Columna I: <b>29</b></span>
-    <span>Relleno R: <b>55 pos.</b></span>
-    <span>Total rectángulos: <b>147</b></span>
+  <div>
+    <div class="logo">Depósito Industrial</div>
+    <div class="title">SOLITAS 13 — BURZACO</div>
   </div>
-  <button class="btn" id="btn-cotas">Cotas ON/OFF</button>
-  <button class="btn" id="btn-reset">Ajustar vista</button>
-  <button class="btn" id="btn-clear">Limpiar selección</button>
+  <div class="sub">Layout de almacenamiento &nbsp;|&nbsp; Escala 1:1</div>
+  <div style="flex:1"></div>
+  <div class="pill">Fondo F: <b>8</b></div>
+  <div class="pill">Columna I: <b>29</b></div>
+  <div class="pill">Relleno R: <b>55 pos.</b></div>
+  <div class="pill">Total: <b>147 módulos</b></div>
+  <button class="btn on" id="btn-cotas">📐 Cotas</button>
+  <button class="btn" id="btn-reset">⊡ Ajustar</button>
+  <button class="btn" id="btn-clear">✕ Selección</button>
 </div>
 
 <div id="canvas-wrap">
-  <svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg>
+  <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="3" refY="2" orient="auto">
+        <polygon points="0 0, 6 2, 0 4" fill="#777"/>
+      </marker>
+      <!-- Textura piso de concreto -->
+      <pattern id="concrete" patternUnits="userSpaceOnUse" width="20" height="20">
+        <rect width="20" height="20" fill="#d8d4cc"/>
+        <line x1="0" y1="20" x2="20" y2="0" stroke="#ccc8c0" stroke-width="0.3" opacity="0.5"/>
+      </pattern>
+      <!-- Hatch para pasillos -->
+      <pattern id="hatch" patternUnits="userSpaceOnUse" width="8" height="8">
+        <path d="M-1,1 l2,-2 M0,8 l8,-8 M7,9 l2,-2" stroke="#c8c4bb" stroke-width="0.5" opacity="0.4"/>
+      </pattern>
+      <!-- Sombra rack -->
+      <filter id="rack-shadow" x="-10%" y="-10%" width="120%" height="120%">
+        <feDropShadow dx="1" dy="1" stdDeviation="1" flood-color="rgba(0,0,0,0.3)"/>
+      </filter>
+    </defs>
+  </svg>
   <div id="tooltip"></div>
-  <div id="zoom-controls">
-    <div class="zoom-btn" id="zin">+</div>
-    <div class="zoom-btn" id="zout">−</div>
+  <div id="zoom-wrap">
+    <div class="zbtn" id="zin">+</div>
+    <div class="zbtn" id="zout">−</div>
   </div>
+  <div id="legend">
+    <div class="l-title">LEYENDA</div>
+    <div class="l-row"><div class="l-box" style="background:#d4e8f0;border-color:#2a7aa8"></div>Fila de fondo (F)</div>
+    <div class="l-row"><div class="l-box" style="background:#f0e8d4;border-color:#a87a2a"></div>Columna lateral (I)</div>
+    <div class="l-row"><div class="l-box" style="background:#ddeedd;border-color:#2a7a4a"></div>Rack cara A (Ra)</div>
+    <div class="l-row"><div class="l-box" style="background:#cce0cc;border-color:#1f5e38"></div>Rack cara B (Rb)</div>
+  </div>
+  <div id="scalebar" id="scalebar">10 m</div>
 </div>
 
 <script>
-// ============ PARAMETROS (metros) ============
-const SCALE = 10;  // px por metro
+// ============ PARAMETROS ============
+const SCALE = 14;
 const ANCHO = 19.67, ALTO = 76.79;
 const R_SUP = 0.80, R_INF = 3.00;
 const FONDO_W = 2.40, FONDO_H = 1.50;
@@ -140,269 +180,347 @@ const IZQ_W = 2.30, IZQ_H = 2.40;
 const PASILLO_IZQ = 3.00, PASILLO_F_R = 3.00;
 const RELL_W = 2.40, RELL_H_MITAD = 1.50, RELL_H_TOTAL = 3.00;
 const PASILLO_FILA = 3.30;
+const WALL = 0.25; // grosor muro en metros
 
-const PX = SCALE, m = v => v * PX;
+const m = v => v * SCALE;
+const OX = 80, OY = 60;
 
-// ============ SVG SETUP ============
 const svg = document.getElementById('svg');
-const SVG_W = m(ANCHO) + 120;
-const SVG_H = m(ALTO) + 120;
+const SVG_W = m(ANCHO) + 180;
+const SVG_H = m(ALTO) + 160;
 svg.setAttribute('width', SVG_W);
 svg.setAttribute('height', SVG_H);
 svg.setAttribute('viewBox', `0 0 ${SVG_W} ${SVG_H}`);
 
-const OX = 70, OY = 50;  // offset del perímetro
-
 function el(tag, attrs, parent) {
   const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  for (const [k,v] of Object.entries(attrs)) e.setAttribute(k,v);
   if (parent) parent.appendChild(e);
   return e;
 }
 
-// Grupos
-const gCotas = el('g', {id:'cotas'}, svg);
-const gPerim = el('g', {id:'perim'}, svg);
-const gRacks = el('g', {id:'racks'}, svg);
+const gFloor   = el('g',{id:'floor'},svg);
+const gWalls   = el('g',{id:'walls'},svg);
+const gPasillos= el('g',{id:'pasillos'},svg);
+const gCotas   = el('g',{id:'cotas'},svg);
+const gRacks   = el('g',{id:'racks'},svg);
+const gLabels  = el('g',{id:'labels'},svg);
 
-// ============ PERIMETRO ============
-el('rect', {
-  x: OX, y: OY, width: m(ANCHO), height: m(ALTO),
-  class: 'perimetro'
-}, gPerim);
+// ============ PISO ============
+el('rect',{x:OX,y:OY,width:m(ANCHO),height:m(ALTO),fill:'url(#concrete)'},gFloor);
+
+// Zona de pasillos con hatch
+function pisoPasillo(x_m,y_m,w_m,h_m) {
+  el('rect',{x:OX+m(x_m),y:OY+m(y_m),width:m(w_m),height:m(h_m),fill:'url(#hatch)'},gPasillos);
+}
+// Pasillo F-R
+pisoPasillo(IZQ_W, R_SUP+FONDO_H, ANCHO-IZQ_W, PASILLO_F_R);
+// Pasillo izquierdo (al lado de I)
+const y_rell = R_SUP+FONDO_H+PASILLO_F_R;
+const alto_rell = ALTO - y_rell - R_INF;
+const n_filas = Math.floor((alto_rell+PASILLO_FILA)/(RELL_H_TOTAL+PASILLO_FILA));
+for(let f=0;f<n_filas;f++){
+  const y_top = y_rell + f*(RELL_H_TOTAL+PASILLO_FILA);
+  pisoPasillo(IZQ_W, y_top+RELL_H_TOTAL, ANCHO-IZQ_W, f<n_filas-1?PASILLO_FILA:0.01);
+}
+// Pasillo izq (entre col I y racks R)
+pisoPasillo(IZQ_W, y_rell, PASILLO_IZQ, alto_rell);
+
+// ============ MUROS ============
+// Muro exterior (grosor visual)
+el('rect',{
+  x:OX-m(WALL), y:OY-m(WALL),
+  width:m(ANCHO+WALL*2), height:m(ALTO+WALL*2),
+  fill:'none', stroke:'#3a3a3a', 'stroke-width':m(WALL*2)
+},gWalls);
+// Línea interior del muro
+el('rect',{
+  x:OX, y:OY, width:m(ANCHO), height:m(ALTO),
+  fill:'none', stroke:'#555', 'stroke-width':2
+},gWalls);
+
+// Columnas estructurales (cada 6m aprox)
+const colSize = m(0.4);
+function columna(x_m, y_m){
+  const cx = OX+m(x_m)-colSize/2, cy = OY+m(y_m)-colSize/2;
+  el('rect',{x:cx,y:cy,width:colSize,height:colSize,class:'columna'},gWalls);
+  // Cruz interna
+  el('line',{x1:cx,y1:cy+colSize/2,x2:cx+colSize,y2:cy+colSize/2,stroke:'#777','stroke-width':'0.5'},gWalls);
+  el('line',{x1:cx+colSize/2,y1:cy,x2:cx+colSize/2,y2:cy+colSize,stroke:'#777','stroke-width':'0.5'},gWalls);
+}
+// Esquinas
+columna(0,0); columna(ANCHO,0); columna(0,ALTO); columna(ANCHO,ALTO);
+// Intermedias
+for(let y=8;y<ALTO;y+=8){ columna(0,y); columna(ANCHO,y); }
 
 // ============ RACKS ============
-const racks = [];
+const tipoColor = {
+  F:  {fill:'#d4e8f0', stroke:'#2a7aa8', text:'#1a5a7a', label:'Fila Fondo'},
+  I:  {fill:'#f0e8d4', stroke:'#a87a2a', text:'#7a5a1a', label:'Columna Lateral'},
+  Ra: {fill:'#ddeedd', stroke:'#2a7a4a', text:'#1a5a2a', label:'Rack Cara A'},
+  Rb: {fill:'#cce0cc', stroke:'#1f5e38', text:'#154d2a', label:'Rack Cara B'},
+};
 
-function addRack(x_m, y_m, w_m, h_m, id, tipo, mitad) {
-  const rx = OX + m(x_m), ry = OY + m(y_m);
-  const rw = m(w_m), rh = m(h_m);
-  const g = el('g', {}, gRacks);
-  const rect = el('rect', {
-    x: rx, y: ry, width: rw, height: rh,
-    class: `rack-${tipo}`,
-    'data-id': id,
-    'data-w': w_m,
-    'data-h': h_m,
-    'data-tipo': tipo
-  }, g);
+function addRack(x_m, y_m, w_m, h_m, id, tipo) {
+  const rx=OX+m(x_m), ry=OY+m(y_m), rw=m(w_m), rh=m(h_m);
+  const col = tipoColor[tipo];
+  const g = el('g',{'data-id':id,'data-tipo':tipo},gRacks);
+  g.style.cursor='pointer';
 
-  const label = el('text', {
-    x: rx + rw/2,
-    y: ry + rh/2,
-    class: `rack-label${id.length > 5 ? ' rack-label-small' : ''}`,
-  }, g);
-  label.textContent = id;
+  // Sombra
+  el('rect',{x:rx+2,y:ry+2,width:rw,height:rh,fill:'rgba(0,0,0,0.15)',rx:1},g);
 
-  g.style.cursor = 'pointer';
+  // Cuerpo
+  const body = el('rect',{
+    x:rx,y:ry,width:rw,height:rh,
+    fill:col.fill,stroke:col.stroke,'stroke-width':1.5,rx:1,
+    filter:'url(#rack-shadow)'
+  },g);
+
+  // Estanterías horizontales (líneas que simulan bandejas)
+  const nShelves = Math.max(2, Math.round(h_m/0.5));
+  for(let s=1;s<nShelves;s++){
+    el('line',{
+      x1:rx+2, y1:ry+rh*(s/nShelves),
+      x2:rx+rw-2, y2:ry+rh*(s/nShelves),
+      stroke:col.stroke, 'stroke-width':0.4, opacity:0.5
+    },g);
+  }
+
+  // Borde superior más grueso (frente del rack)
+  el('line',{x1:rx,y1:ry,x2:rx+rw,y2:ry,stroke:col.stroke,'stroke-width':2.5},g);
+
+  // Etiqueta
+  const fs = Math.max(5, Math.min(8, m(Math.min(w_m,h_m))/5));
+  const txt = el('text',{
+    x:rx+rw/2, y:ry+rh/2,
+    'font-size':fs, fill:col.text,
+    class:'rack-label'
+  },g);
+  txt.textContent = id;
+
+  // Interactividad
   g.addEventListener('mouseenter', e => {
-    if (!rect.classList.contains('rack-selected'))
-      rect.classList.add('rack-hover');
-    showTooltip(e, id, w_m, h_m, tipo);
+    body.style.filter='brightness(0.9) drop-shadow(0 0 5px rgba(200,168,75,0.7))';
+    body.setAttribute('stroke','#c8a84b');
+    showTT(e,id,w_m,h_m,tipo);
   });
   g.addEventListener('mouseleave', () => {
-    rect.classList.remove('rack-hover');
-    hideTooltip();
+    if(!g.classList.contains('rack-selected')){
+      body.style.filter='url(#rack-shadow)';
+      body.setAttribute('stroke',col.stroke);
+    }
+    hideTT();
   });
-  g.addEventListener('mousemove', e => showTooltip(e, id, w_m, h_m, tipo));
+  g.addEventListener('mousemove', e => showTT(e,id,w_m,h_m,tipo));
   g.addEventListener('click', () => {
-    rect.classList.toggle('rack-selected');
-    rect.classList.remove('rack-hover');
+    g.classList.toggle('rack-selected');
+    if(g.classList.contains('rack-selected')){
+      body.style.filter='drop-shadow(0 0 7px rgba(200,168,75,1))';
+      body.setAttribute('stroke','#c8a84b');
+    } else {
+      body.style.filter='url(#rack-shadow)';
+      body.setAttribute('stroke',col.stroke);
+    }
   });
-
-  racks.push({ id, rect, x_m, y_m, w_m, h_m, tipo });
 }
 
-// Fila F
-for (let i = 0; i < 8; i++) {
-  addRack(i * FONDO_W, R_SUP, FONDO_W, FONDO_H, `F-${String(i+1).padStart(2,'0')}`, 'F');
-}
+// ---- Fila F ----
+const n_fondo = Math.floor(ANCHO/FONDO_W);
+for(let i=0;i<n_fondo;i++)
+  addRack(i*FONDO_W, R_SUP, FONDO_W, FONDO_H, `F-${String(i+1).padStart(2,'0')}`, 'F');
 
-// Columna I
-const y_central = R_SUP + FONDO_H;
-const alto_izq = ALTO - y_central - R_INF;
-const n_izq = Math.floor(alto_izq / IZQ_H);
-for (let i = 0; i < n_izq; i++) {
-  addRack(0, y_central + i * IZQ_H, IZQ_W, IZQ_H, `I-${String(i+1).padStart(2,'0')}`, 'I');
-}
+// ---- Columna I ----
+const y_central = R_SUP+FONDO_H;
+const alto_izq = ALTO-y_central-R_INF;
+const n_izq = Math.floor(alto_izq/IZQ_H);
+for(let i=0;i<n_izq;i++)
+  addRack(0, y_central+i*IZQ_H, IZQ_W, IZQ_H, `I-${String(i+1).padStart(2,'0')}`, 'I');
 
-// Relleno R
-const y_rell = R_SUP + FONDO_H + PASILLO_F_R;
-const x_rell = IZQ_W + PASILLO_IZQ;
-const alto_rell = ALTO - y_rell - R_INF;
-const n_cols = Math.floor((ANCHO - x_rell) / RELL_W);
-const n_filas = Math.floor((alto_rell + PASILLO_FILA) / (RELL_H_TOTAL + PASILLO_FILA));
-let cnt = 1;
-for (let f = 0; f < n_filas; f++) {
-  const y_top = y_rell + f * (RELL_H_TOTAL + PASILLO_FILA);
-  for (let c = 0; c < n_cols; c++) {
-    const x = x_rell + c * RELL_W;
-    const id = String(cnt).padStart(2,'0');
+// ---- Relleno R ----
+const x_rell = IZQ_W+PASILLO_IZQ;
+const n_cols = Math.floor((ANCHO-x_rell)/RELL_W);
+let cnt=1;
+for(let f=0;f<n_filas;f++){
+  const y_top = y_rell+f*(RELL_H_TOTAL+PASILLO_FILA);
+  for(let c=0;c<n_cols;c++){
+    const x=x_rell+c*RELL_W;
+    const id=String(cnt).padStart(2,'0');
     addRack(x, y_top, RELL_W, RELL_H_MITAD, `R-${id}a`, 'Ra');
-    addRack(x, y_top + RELL_H_MITAD, RELL_W, RELL_H_MITAD, `R-${id}b`, 'Rb');
+    addRack(x, y_top+RELL_H_MITAD, RELL_W, RELL_H_MITAD, `R-${id}b`, 'Rb');
     cnt++;
   }
 }
 
+// ============ FLECHAS PASILLO ============
+function arrow(x_m, y_m, dir){
+  const x=OX+m(x_m), y=OY+m(y_m);
+  if(dir==='v'){
+    el('line',{x1:x,y1:y,x2:x,y2:y+m(1.5),class:'arrow-line'},gLabels);
+  } else {
+    el('line',{x1:x,y1:y,x2:x+m(1.5),y2:y,class:'arrow-line'},gLabels);
+  }
+}
+// Flechas en pasillo central
+for(let f=0;f<n_filas;f++){
+  const yf = y_rell+f*(RELL_H_TOTAL+PASILLO_FILA)+RELL_H_TOTAL+PASILLO_FILA*0.3;
+  if(f<n_filas-1) arrow(IZQ_W+PASILLO_IZQ/2-0.75, yf, 'h');
+}
+
+// Etiquetas pasillo
+function pasilloLabel(x_m,y_m,txt,rot){
+  const t=el('text',{
+    x:OX+m(x_m), y:OY+m(y_m),
+    class:'pasillo-txt',
+    transform: rot?`rotate(-90,${OX+m(x_m)},${OY+m(y_m)})`:''
+  },gLabels);
+  t.textContent=txt;
+}
+pasilloLabel(IZQ_W+PASILLO_IZQ/2, y_central+(y_rell-y_central)/2, 'PASILLO PRINCIPAL 3,00 m');
+pasilloLabel(IZQ_W+PASILLO_IZQ/2, ALTO-R_INF/2, 'ZONA LIBRE 3,00 m');
+
 // ============ COTAS ============
-function cotaH(x1_m, x2_m, y_m, offset_m, label) {
-  const xa = OX + m(x1_m), xb = OX + m(x2_m);
-  const y0 = OY + m(y_m), yc = y0 + m(offset_m);
-  const g = el('g', {}, gCotas);
-  el('line', {x1:xa, y1:y0, x2:xa, y2:yc-2, class:'cota-line'}, g);
-  el('line', {x1:xb, y1:y0, x2:xb, y2:yc-2, class:'cota-line'}, g);
-  el('line', {x1:xa, y1:yc, x2:xb, y2:yc, class:'cota-line'}, g);
-  el('line', {x1:xa-3, y1:yc-3, x2:xa+3, y2:yc+3, class:'cota-line'}, g);
-  el('line', {x1:xb-3, y1:yc-3, x2:xb+3, y2:yc+3, class:'cota-line'}, g);
-  const t = el('text', {x:(xa+xb)/2, y:yc-3, class:'cota-text'}, g);
-  t.textContent = label;
+function cotaH(x1,x2,y,off,label){
+  const xa=OX+m(x1),xb=OX+m(x2),y0=OY+m(y),yc=y0+m(off);
+  const g=el('g',{},gCotas);
+  el('line',{x1:xa,y1:y0,x2:xa,y2:yc+(off<0?2:-2),class:'cota-line'},g);
+  el('line',{x1:xb,y1:y0,x2:xb,y2:yc+(off<0?2:-2),class:'cota-line'},g);
+  el('line',{x1:xa,y1:yc,x2:xb,y2:yc,class:'cota-line'},g);
+  el('line',{x1:xa-3,y1:yc-3,x2:xa+3,y2:yc+3,class:'cota-line'},g);
+  el('line',{x1:xb-3,y1:yc-3,x2:xb+3,y2:yc+3,class:'cota-line'},g);
+  const t=el('text',{x:(xa+xb)/2,y:yc+(off<0?-3:10),class:'cota-text'},g);
+  t.textContent=label;
+}
+function cotaV(y1,y2,x,off,label){
+  const ya=OY+m(y1),yb=OY+m(y2),x0=OX+m(x),xc=x0+m(off);
+  const g=el('g',{},gCotas);
+  el('line',{x1:x0,y1:ya,x2:xc+(off<0?-2:2),y2:ya,class:'cota-line'},g);
+  el('line',{x1:x0,y1:yb,x2:xc+(off<0?-2:2),y2:yb,class:'cota-line'},g);
+  el('line',{x1:xc,y1:ya,x2:xc,y2:yb,class:'cota-line'},g);
+  el('line',{x1:xc-3,y1:ya-3,x2:xc+3,y2:ya+3,class:'cota-line'},g);
+  el('line',{x1:xc-3,y1:yb-3,x2:xc+3,y2:yb+3,class:'cota-line'},g);
+  const mx=xc+(off<0?-12:12), my=(ya+yb)/2;
+  const t=el('text',{x:mx,y:my,class:'cota-text',transform:`rotate(-90,${mx},${my})`},g);
+  t.textContent=label;
 }
 
-function cotaV(y1_m, y2_m, x_m, offset_m, label) {
-  const ya = OY + m(y1_m), yb = OY + m(y2_m);
-  const x0 = OX + m(x_m), xc = x0 + m(offset_m);
-  const g = el('g', {}, gCotas);
-  el('line', {x1:x0, y1:ya, x2:xc+2, y2:ya, class:'cota-line'}, g);
-  el('line', {x1:x0, y1:yb, x2:xc+2, y2:yb, class:'cota-line'}, g);
-  el('line', {x1:xc, y1:ya, x2:xc, y2:yb, class:'cota-line'}, g);
-  el('line', {x1:xc-3, y1:ya-3, x2:xc+3, y2:ya+3, class:'cota-line'}, g);
-  el('line', {x1:xc-3, y1:yb-3, x2:xc+3, y2:yb+3, class:'cota-line'}, g);
-  // Texto rotado
-  const mx = xc + (offset_m > 0 ? 10 : -10);
-  const my = (ya + yb) / 2;
-  const t = el('text', {
-    x: mx, y: my,
-    class: 'cota-text',
-    transform: `rotate(-90, ${mx}, ${my})`
-  }, g);
-  t.textContent = label;
-}
+cotaH(0,ANCHO,0,-3.5,`${ANCHO} m`);
+cotaV(0,ALTO,ANCHO,3.5,`${ALTO} m`);
+cotaV(0,R_SUP,0,-3,`${R_SUP}`);
+cotaV(R_SUP,R_SUP+FONDO_H,0,-3,`${FONDO_H}`);
+cotaV(y_central,y_rell,0,-3,`${PASILLO_F_R}`);
+cotaV(ALTO-R_INF,ALTO,0,-3,`${R_INF}`);
+cotaH(0,FONDO_W,R_SUP,-2,`${FONDO_W}`);
+cotaH(0,IZQ_W,y_central,-2,`${IZQ_W}`);
+cotaH(IZQ_W,IZQ_W+PASILLO_IZQ,y_rell,-2,`${PASILLO_IZQ}`);
+cotaH(x_rell,x_rell+RELL_W,y_rell,-2,`${RELL_W}`);
+cotaV(y_rell,y_rell+RELL_H_MITAD,ANCHO,3,`${RELL_H_MITAD}`);
+cotaV(y_rell+RELL_H_MITAD,y_rell+RELL_H_TOTAL,ANCHO,3,`${RELL_H_MITAD}`);
+cotaV(y_rell+RELL_H_TOTAL,y_rell+RELL_H_TOTAL+PASILLO_FILA,ANCHO,3,`${PASILLO_FILA}`);
 
-// Generales
-cotaH(0, ANCHO, 0, -3.5, `${ANCHO} m`);
-cotaV(0, ALTO, ANCHO, 3.5, `${ALTO} m`);
-// Retiros
-cotaV(0, R_SUP, 0, -3.5, `${R_SUP}`);
-cotaV(R_SUP, R_SUP + FONDO_H, 0, -3.5, `${FONDO_H}`);
-cotaV(y_central, y_rell, 0, -3.5, `${PASILLO_F_R}`);
-cotaV(ALTO - R_INF, ALTO, 0, -3.5, `${R_INF}`);
-// Modulares
-cotaH(0, FONDO_W, R_SUP, -2, `${FONDO_W}`);
-cotaH(0, IZQ_W, y_central, -2, `${IZQ_W}`);
-cotaH(IZQ_W, IZQ_W + PASILLO_IZQ, y_rell, -2, `${PASILLO_IZQ}`);
-cotaH(x_rell, x_rell + RELL_W, y_rell, -2, `${RELL_W}`);
-const y_primera_fila = y_rell;
-cotaV(y_primera_fila, y_primera_fila + RELL_H_MITAD, ANCHO, 3.5, `${RELL_H_MITAD}`);
-cotaV(y_primera_fila + RELL_H_MITAD, y_primera_fila + RELL_H_TOTAL, ANCHO, 3.5, `${RELL_H_MITAD}`);
-cotaV(y_primera_fila + RELL_H_TOTAL, y_primera_fila + RELL_H_TOTAL + PASILLO_FILA, ANCHO, 3.5, `${PASILLO_FILA}`);
-cotaV(y_central + IZQ_H, y_central + IZQ_H * 2, IZQ_W, 1.5, `${IZQ_H}`);
-
-// Etiquetas de zonas
-function zonaLabel(x_m, y_m, txt) {
-  const t = el('text', {
-    x: OX + m(x_m), y: OY + m(y_m),
-    class: 'pasillo-label',
-    'text-anchor': 'middle'
-  }, gPerim);
-  t.textContent = txt;
+// Barra de escala
+function updateScaleBar(zoom){
+  const sb=document.getElementById('scalebar');
+  const real_m = 100/(SCALE*zoom);
+  const nice = [0.5,1,2,5,10,20,50][([0.5,1,2,5,10,20,50].findIndex(v=>v>=real_m))??6];
+  const barPx = nice*SCALE*zoom;
+  sb.innerHTML=`<svg width="${barPx+2}" height="12" style="display:block;margin:0 auto"><line x1="1" y1="6" x2="${barPx+1}" y2="6" stroke="#888" stroke-width="1.5"/><line x1="1" y1="2" x2="1" y2="10" stroke="#888" stroke-width="1.5"/><line x1="${barPx+1}" y1="2" x2="${barPx+1}" y2="10" stroke="#888" stroke-width="1.5"/></svg><span style="color:#aaa">${nice} m</span>`;
 }
-zonaLabel(IZQ_W/2 + (ANCHO - IZQ_W)/2 + IZQ_W, y_central + (y_rell - y_central)/2, '— PASILLO 3,00 m —');
 
 // ============ TOOLTIP ============
-const tooltip = document.getElementById('tooltip');
-const tipoNombre = {F: 'Fila Fondo', I: 'Columna Izquierda', Ra: 'Relleno (cara A)', Rb: 'Relleno (cara B)'};
-
-function showTooltip(e, id, w, h, tipo) {
-  tooltip.innerHTML = `<b>${id}</b><br><span class="sub">${tipoNombre[tipo]||tipo}<br>${w} m × ${h} m</span>`;
-  tooltip.style.opacity = 1;
-  moveTooltip(e);
+const tooltip=document.getElementById('tooltip');
+const tipoNombre={F:'Fila de fondo',I:'Columna lateral',Ra:'Rack — cara A',Rb:'Rack — cara B'};
+const tipoColor2={F:'#2a7aa8',I:'#a87a2a',Ra:'#2a7a4a',Rb:'#1f5e38'};
+function showTT(e,id,w,h,tipo){
+  tooltip.innerHTML=`
+    <div class="tt-id"><span class="tt-dot" style="background:${tipoColor2[tipo]}"></span>${id}</div>
+    <div class="tt-tipo">${tipoNombre[tipo]||tipo}</div>
+    <div class="tt-dim">📏 ${w} m × ${h} m &nbsp;|&nbsp; ${(w*h).toFixed(2)} m²</div>`;
+  tooltip.style.opacity=1;
+  moveTT(e);
 }
-function hideTooltip() { tooltip.style.opacity = 0; }
-function moveTooltip(e) {
-  const wrap = document.getElementById('canvas-wrap').getBoundingClientRect();
-  tooltip.style.left = (e.clientX - wrap.left + 14) + 'px';
-  tooltip.style.top = (e.clientY - wrap.top + 14) + 'px';
+function hideTT(){ tooltip.style.opacity=0; }
+function moveTT(e){
+  const r=document.getElementById('canvas-wrap').getBoundingClientRect();
+  let lx=e.clientX-r.left+16, ly=e.clientY-r.top+16;
+  if(lx+180>r.width) lx=e.clientX-r.left-190;
+  tooltip.style.left=lx+'px'; tooltip.style.top=ly+'px';
 }
 
 // ============ PAN + ZOOM ============
-const wrap = document.getElementById('canvas-wrap');
-let viewX = 0, viewY = 0, viewZoom = 1;
-let dragging = false, lastX, lastY;
+const wrap=document.getElementById('canvas-wrap');
+let vx=0, vy=0, vz=1;
+let drag=false, lx=0, ly=0;
 
-function applyTransform() {
-  svg.style.transform = `translate(${viewX}px,${viewY}px) scale(${viewZoom})`;
-  svg.style.transformOrigin = '0 0';
+function applyT(){
+  svg.style.transform=`translate(${vx}px,${vy}px) scale(${vz})`;
+  svg.style.transformOrigin='0 0';
+  updateScaleBar(vz);
 }
 
-function fitView() {
-  const ww = wrap.clientWidth, wh = wrap.clientHeight;
-  const scaleX = (ww - 40) / SVG_W;
-  const scaleY = (wh - 40) / SVG_H;
-  viewZoom = Math.min(scaleX, scaleY);
-  viewX = (ww - SVG_W * viewZoom) / 2;
-  viewY = (wh - SVG_H * viewZoom) / 2;
-  applyTransform();
+function fitView(zoomFactor=1){
+  const ww=wrap.clientWidth, wh=wrap.clientHeight;
+  const sz=Math.min((ww-40)/SVG_W,(wh-40)/SVG_H);
+  vz=sz*zoomFactor;
+  vx=(ww-SVG_W*vz)/2;
+  vy=(wh-SVG_H*vz)/2;
+  applyT();
 }
 
-wrap.addEventListener('mousedown', e => {
-  dragging = true; lastX = e.clientX; lastY = e.clientY;
-  wrap.classList.add('grabbing');
+wrap.addEventListener('mousedown',e=>{ drag=true; lx=e.clientX; ly=e.clientY; wrap.classList.add('grabbing'); });
+window.addEventListener('mouseup',()=>{ drag=false; wrap.classList.remove('grabbing'); });
+window.addEventListener('mousemove',e=>{
+  if(!drag) return;
+  vx+=e.clientX-lx; vy+=e.clientY-ly;
+  lx=e.clientX; ly=e.clientY; applyT();
 });
-window.addEventListener('mouseup', () => { dragging = false; wrap.classList.remove('grabbing'); });
-window.addEventListener('mousemove', e => {
-  if (!dragging) return;
-  viewX += e.clientX - lastX;
-  viewY += e.clientY - lastY;
-  lastX = e.clientX; lastY = e.clientY;
-  applyTransform();
-});
-
-wrap.addEventListener('wheel', e => {
+wrap.addEventListener('wheel',e=>{
   e.preventDefault();
-  const factor = e.deltaY < 0 ? 1.12 : 0.89;
-  const rect = wrap.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-  viewX = mx - (mx - viewX) * factor;
-  viewY = my - (my - viewY) * factor;
-  viewZoom *= factor;
-  applyTransform();
-}, { passive: false });
+  const f=e.deltaY<0?1.12:0.89;
+  const r=wrap.getBoundingClientRect();
+  const mx=e.clientX-r.left, my=e.clientY-r.top;
+  vx=mx-(mx-vx)*f; vy=my-(my-vy)*f; vz*=f; applyT();
+},{passive:false});
 
-document.getElementById('zin').onclick = () => { viewZoom *= 1.2; applyTransform(); };
-document.getElementById('zout').onclick = () => { viewZoom /= 1.2; applyTransform(); };
-document.getElementById('btn-reset').onclick = fitView;
-document.getElementById('btn-clear').onclick = () => {
-  document.querySelectorAll('.rack-selected').forEach(r => r.classList.remove('rack-selected'));
+document.getElementById('zin').onclick=()=>{ vz*=1.2; applyT(); };
+document.getElementById('zout').onclick=()=>{ vz/=1.2; applyT(); };
+document.getElementById('btn-reset').onclick=()=>fitView(1);
+document.getElementById('btn-clear').onclick=()=>{
+  document.querySelectorAll('.rack-selected').forEach(g=>{
+    g.classList.remove('rack-selected');
+    const tipo=g.getAttribute('data-tipo');
+    const body=g.querySelector('rect');
+    if(body){ body.style.filter='url(#rack-shadow)'; body.setAttribute('stroke',tipoColor[tipo]?.stroke||'#555'); }
+  });
 };
 
-let cotasVisible = true;
-document.getElementById('btn-cotas').onclick = function() {
-  cotasVisible = !cotasVisible;
-  gCotas.style.display = cotasVisible ? '' : 'none';
-  this.classList.toggle('active', !cotasVisible);
+let cotasOn=true;
+document.getElementById('btn-cotas').onclick=function(){
+  cotasOn=!cotasOn;
+  gCotas.style.display=cotasOn?'':'none';
+  this.classList.toggle('on',cotasOn);
 };
 
-// Touch pan
-let touches = [];
-wrap.addEventListener('touchstart', e => { touches = [...e.touches]; });
-wrap.addEventListener('touchmove', e => {
+// Touch
+let touches=[];
+wrap.addEventListener('touchstart',e=>{ touches=[...e.touches]; },{passive:true});
+wrap.addEventListener('touchmove',e=>{
   e.preventDefault();
-  if (e.touches.length === 1 && touches.length === 1) {
-    viewX += e.touches[0].clientX - touches[0].clientX;
-    viewY += e.touches[0].clientY - touches[0].clientY;
+  if(e.touches.length===1&&touches.length===1){
+    vx+=e.touches[0].clientX-touches[0].clientX;
+    vy+=e.touches[0].clientY-touches[0].clientY;
   }
-  if (e.touches.length === 2 && touches.length === 2) {
-    const d0 = Math.hypot(touches[1].clientX-touches[0].clientX, touches[1].clientY-touches[0].clientY);
-    const d1 = Math.hypot(e.touches[1].clientX-e.touches[0].clientX, e.touches[1].clientY-e.touches[0].clientY);
-    viewZoom *= d1/d0;
+  if(e.touches.length===2&&touches.length===2){
+    const d0=Math.hypot(touches[1].clientX-touches[0].clientX,touches[1].clientY-touches[0].clientY);
+    const d1=Math.hypot(e.touches[1].clientX-e.touches[0].clientX,e.touches[1].clientY-e.touches[0].clientY);
+    vz*=d1/d0;
   }
-  touches = [...e.touches];
-  applyTransform();
-}, { passive: false });
+  touches=[...e.touches]; applyT();
+},{passive:false});
 
-window.addEventListener('load', fitView);
-window.addEventListener('resize', fitView);
+// Inicio con zoom mas cercano (1.5x del fit)
+window.addEventListener('load',()=>fitView(1.6));
+window.addEventListener('resize',()=>fitView(1.6));
 </script>
 </body>
 </html>
